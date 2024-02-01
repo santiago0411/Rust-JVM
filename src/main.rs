@@ -9,7 +9,14 @@ use crate::class_file::*;
 use crate::code::*;
 
 fn main() {
-    let file_path = "etc/HelloWorld.class";
+    let args: Vec<String> = std::env::args().collect();
+
+    if args.len() < 3 {
+        println!("Usage: {} <file_path> <method_name>", args[0]);
+        return;
+    }
+
+    let file_path = &args[1];
     let mut cursor: Cursor<Vec<u8>>;
 
     match read_file_to_buf(file_path) {
@@ -31,7 +38,7 @@ fn main() {
         Ok(cf) => class_file = cf
     }
 
-    if let Some(main_method) = class_file.find_method_by_name("main") {
+    if let Some(main_method) = class_file.find_method_by_name(&args[2]) {
         if let Some(att) = class_file.find_attribute_by_name(&main_method.attributes, "Code") {
             if let Ok(code_att) = CodeAttribute::new(att) {
                 let _ = execute_code(&class_file, code_att.code);
