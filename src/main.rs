@@ -17,6 +17,7 @@ fn main() {
     }
 
     let file_path = &args[1];
+    let method_to_run = &args[2];
     let mut cursor: Cursor<Vec<u8>>;
 
     match read_file_to_buf(file_path) {
@@ -38,11 +39,13 @@ fn main() {
         Ok(cf) => class_file = cf
     }
 
-    if let Some(main_method) = class_file.find_method_by_name(&args[2]) {
+    if let Some(main_method) = class_file.find_method_by_name(method_to_run) {
         if let Some(att) = class_file.find_attribute_by_name(&main_method.attributes, "Code") {
             if let Ok(code_att) = CodeAttribute::new(att) {
                 let _ = execute_code(&class_file, code_att.code);
             }
         }
+    } else {
+        eprintln!("Method '{}' not found in {}", method_to_run, file_path);
     }
 }
