@@ -98,20 +98,25 @@ fn ldc(class_file: &ClassFile, cursor: &mut Cursor<Vec<u8>>, stack: &mut VecDequ
     let index: u8 = cursor.read_u8()?;
     let constant = class_file.constants_pool.get((index - 1) as usize);
 
-    if let Some(Constant::String(string_constant)) = constant {
-        if let Some(Constant::Utf8(string)) = class_file.constants_pool.get((string_constant.string_index - 1) as usize) {
-            stack.push_back(Instruction::String(string.data.clone()));
-            return Ok(())
+    match constant {
+        Some(Constant::String(string_constant)) => {
+            if let Some(Constant::Utf8(string)) = class_file.constants_pool.get((string_constant.string_index - 1) as usize) {
+                stack.push_back(Instruction::String(string.data.clone()));
+                return Ok(())
+            }
+        }
+        Some(Constant::Integer(int_constant)) => {
+            stack.push_back(Instruction::Integer(int_constant.value as i32));
+        }
+        Some(Constant::Float(float_constant)) => {
+            stack.push_back(Instruction::Float(float_constant.value));
+        }
+        _ => {
+            panic!("LDC - Invalid constant type!!")
         }
     }
-    else if let Some(Constant::Integer(int_constant)) = constant {
-        stack.push_back(Instruction::Integer(int_constant.value as i32));
-    }
-    else if let Some(Constant::Float(float_constant)) = constant {
-        stack.push_back(Instruction::Float(float_constant.value));
-    }
 
-    panic!("LDC - Invalid constant type!!")
+    unreachable!("LDC - Invalid constant type!!")
 }
 
 fn invoke_virtual(class_file: &ClassFile, cursor: &mut Cursor<Vec<u8>>, stack: &mut VecDeque<Instruction>) -> io::Result<()> {
